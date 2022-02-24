@@ -1,0 +1,9 @@
+[package]
+name = "povstats"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "2"  }
+subxt = "0.17"
+tokio = { version = "1", features = ["full"] }
