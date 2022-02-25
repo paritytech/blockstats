@@ -739,12 +739,9 @@ dependencies = [
 
 [[package]]
 name = "heck"
-version = "0.3.3"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6d621efb26863f0e9924c6ac577e8275e5e6b77455db64ffa6c65c904e9e132c"
-dependencies = [
- "unicode-segmentation",
-]
+checksum = "2540771e65fc8cb83cd6e8a237f70c319bd5c29f78ed1084ba5d50eeac86f7f9"
 
 [[package]]
 name = "hermit-abi"
@@ -2594,8 +2591,7 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 [[package]]
 name = "subxt"
 version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2bd89701863271876fecd8e3abae2c639f7a6b94bf316468d14c33b198e6ecf9"
+source = "git+https://github.com/paritytech/subxt.git?branch=at-block-stats#8c62bbcad9895b68a58f73ae4897623d0d767ea6"
 dependencies = [
  "async-trait",
  "bitvec",
@@ -2621,8 +2617,7 @@ dependencies = [
 [[package]]
 name = "subxt-codegen"
 version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a543285728058f878d45f652c1d3c6653dc126dffe678bc1fbe0021d82f853d8"
+source = "git+https://github.com/paritytech/subxt.git?branch=at-block-stats#8c62bbcad9895b68a58f73ae4897623d0d767ea6"
 dependencies = [
  "async-trait",
  "darling",
@@ -2640,8 +2635,7 @@ dependencies = [
 [[package]]
 name = "subxt-macro"
 version = "0.17.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4780536dce546910bd9fb691397434c4267885f25bc8870697cce5e210621966"
+source = "git+https://github.com/paritytech/subxt.git?branch=at-block-stats#8c62bbcad9895b68a58f73ae4897623d0d767ea6"
 dependencies = [
  "async-trait",
  "darling",
@@ -2993,12 +2987,6 @@ checksum = "d54590932941a9e9266f0832deed84ebe1bf2e4c9e4a3554d393d18f5e854bf9"
 dependencies = [
  "tinyvec",
 ]
-
-[[package]]
-name = "unicode-segmentation"
-version = "1.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7e8820f5d777f6224dc4be3632222971ac30164d4a258d595640799554ebfd99"
 
 [[package]]
 name = "unicode-xid"

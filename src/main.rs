@@ -1,23 +1,23 @@
-use subxt::{ClientBuilder, DefaultConfig, DefaultExtra, sp_runtime::traits::Header};
+use subxt::{sp_runtime::traits::Header, ClientBuilder, DefaultConfig, DefaultExtra};
 
-#[subxt::subxt(runtime_metadata_path = "metadata/canvas.scale")]
-pub mod canvas {}
+#[subxt::subxt(runtime_metadata_path = "metadata/substrate.scale")]
+pub mod substrate {}
 
-type CanvasRuntime = canvas::RuntimeApi<DefaultConfig, DefaultExtra<DefaultConfig>>;
+type SubstrateRuntime = substrate::RuntimeApi<DefaultConfig, DefaultExtra<DefaultConfig>>;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let api = ClientBuilder::new()
-        .set_url("wss://canvas-rococo-rpc.polkadot.io:443")
         .build()
         .await?
-        .to_runtime_api::<CanvasRuntime>();
+        .to_runtime_api::<SubstrateRuntime>();
 
-	let mut blocks = api.client.rpc().subscribe_blocks().await?;
+    let mut blocks = api.client.rpc().subscribe_blocks().await?;
 
-	while let Some(Ok(block)) = blocks.next().await {
-		println!("Block: {}", block.number());
-	}
+    while let Some(Ok(block)) = blocks.next().await {
+        let stats = api.client.rpc().block_stats(Some(block.hash())).await?;
+        println!("{}: {:?}", block.number(), stats);
+    }
 
-	Ok(())
+    Ok(())
 }
