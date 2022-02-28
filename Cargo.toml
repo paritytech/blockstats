@@ -6,4 +6,4 @@ edition = "2021"
 [dependencies]
 codec = { package = "parity-scale-codec", version = "2"  }
 subxt = { git = "https://github.com/paritytech/subxt.git", branch = "at-block-stats" }
-tokio = { version = "1", features = ["full"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
