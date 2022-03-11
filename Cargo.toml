@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+clap = { version = "3", features = ["derive"] }
 codec = { package = "parity-scale-codec", version = "2"  }
 subxt = { git = "https://github.com/paritytech/subxt.git", branch = "at-block-stats" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
