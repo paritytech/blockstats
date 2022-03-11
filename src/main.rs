@@ -5,7 +5,7 @@ use subxt::{sp_runtime::traits::Header, ClientBuilder, DefaultConfig, DefaultExt
 #[clap(author, version, about, long_about = None)]
 struct Args {
     /// The node to connect to.
-    #[clap(long, default_value = "ws://localhost:9933/")]
+    #[clap(long, default_value = "ws://localhost:9944/")]
     url: String,
 }
 
