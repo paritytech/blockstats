@@ -26,7 +26,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut blocks = api.client.rpc().subscribe_blocks().await?;
 
     while let Some(Ok(block)) = blocks.next().await {
-        let stats = api.client.rpc().block_stats(Some(block.hash())).await?;
+        let stats = api.client.rpc().block_stats(block.hash()).await?;
         println!("{}: {:?}", block.number(), stats);
     }
 
