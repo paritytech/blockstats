@@ -488,9 +488,9 @@ dependencies = [
 
 [[package]]
 name = "dyn-clone"
-version = "1.0.4"
+version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee2626afccd7561a06cf1367e2950c4718ea04565e20fb5029b6c7d8ad09abcf"
+checksum = "21e50f3adc76d6a43f5ed73b698a87d0760ca74617f60f7c3b879003536fdd28"
 
 [[package]]
 name = "ed25519"
@@ -1255,9 +1255,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec"
-version = "3.1.0"
+version = "3.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8483b84fb12de1dc23bf95d26030d16cea56391d136db0db37f749508104e3e6"
+checksum = "e8b44461635bbb1a0300f100a841e571e7d919c81c73075ef5d152ffdb521066"
 dependencies = [
  "arrayvec 0.7.2",
  "bitvec",
@@ -1269,9 +1269,9 @@ dependencies = [
 
 [[package]]
 name = "parity-scale-codec-derive"
-version = "3.1.0"
+version = "3.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7259388ceb4c23bc09caef272c9e7a732b3b8f9fbd0b41f0009a91d6548cc1d9"
+checksum = "c45ed1f39709f5a89338fab50e59816b2e8815f5bb58276e7ddf9afd495f73f8"
 dependencies = [
  "proc-macro-crate 1.1.3",
  "proc-macro2",
@@ -2297,7 +2297,7 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 [[package]]
 name = "subxt"
 version = "0.18.1"
-source = "git+https://github.com/paritytech/subxt.git?branch=at-block-stats#4a73a77959e4f8aa05a3b11dd58dfb130a0f6d2c"
+source = "git+https://github.com/paritytech/subxt.git?branch=at-block-stats#16d4306dfa7725d11c1c7f0539b4b3e3f0d99443"
 dependencies = [
  "async-trait",
  "bitvec",
@@ -2321,7 +2321,7 @@ dependencies = [
 [[package]]
 name = "subxt-codegen"
 version = "0.18.1"
-source = "git+https://github.com/paritytech/subxt.git?branch=at-block-stats#4a73a77959e4f8aa05a3b11dd58dfb130a0f6d2c"
+source = "git+https://github.com/paritytech/subxt.git?branch=at-block-stats#16d4306dfa7725d11c1c7f0539b4b3e3f0d99443"
 dependencies = [
  "async-trait",
  "darling",
@@ -2339,7 +2339,7 @@ dependencies = [
 [[package]]
 name = "subxt-macro"
 version = "0.18.1"
-source = "git+https://github.com/paritytech/subxt.git?branch=at-block-stats#4a73a77959e4f8aa05a3b11dd58dfb130a0f6d2c"
+source = "git+https://github.com/paritytech/subxt.git?branch=at-block-stats#16d4306dfa7725d11c1c7f0539b4b3e3f0d99443"
 dependencies = [
  "async-trait",
  "darling",
@@ -2357,9 +2357,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "1.0.87"
+version = "1.0.89"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1e59d925cf59d8151f25a3bedf97c9c157597c9df7324d32d68991cc399ed08b"
+checksum = "ea297be220d52398dcc07ce15a209fce436d361735ac1db700cab3b6cdfb9f54"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2924,9 +2924,9 @@ dependencies = [
 
 [[package]]
 name = "zeroize"
-version = "1.5.3"
+version = "1.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "50344758e2f40e3a1fcfc8f6f91aa57b5f8ebd8d27919fe6451f15aaaf9ee608"
+checksum = "7eb5728b8afd3f280a869ce1d4c554ffaed35f45c231fc41bfbd0381bef50317"
 dependencies = [
  "zeroize_derive",
 ]
