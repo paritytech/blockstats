@@ -12,15 +12,17 @@ pub mod substrate {}
 
 type SubstrateRuntime = substrate::RuntimeApi<DefaultConfig, DefaultExtra<DefaultConfig>>;
 
+#[derive(Debug)]
 pub struct BlockStats {
-    number: u32,
-    pov_len: u64,
-    witness_len: u64,
-    len: u64,
-    weight: u64,
-    num_extrinsics: u64,
-    max_pov: u64,
-    max_weight: u64,
+    pub hash: subxt::sp_core::H256,
+    pub number: u32,
+    pub pov_len: u64,
+    pub witness_len: u64,
+    pub len: u64,
+    pub weight: u64,
+    pub num_extrinsics: u64,
+    pub max_pov: u64,
+    pub max_weight: u64,
 }
 
 impl fmt::Display for BlockStats {
@@ -80,6 +82,7 @@ pub async fn subscribe_stats(
             let total_weight = weight.normal + weight.operational + weight.mandatory;
 
             Ok(BlockStats {
+                hash: block.hash(),
                 number: *block.number(),
                 pov_len,
                 witness_len: stats.witness_len,
