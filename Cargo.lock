@@ -1396,7 +1396,6 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "futures",
- "once_cell",
  "parity-scale-codec",
  "subxt",
  "tokio",
@@ -2298,8 +2297,8 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 
 [[package]]
 name = "subxt"
-version = "0.18.1"
-source = "git+https://github.com/paritytech/subxt.git?branch=at-block-stats#16d4306dfa7725d11c1c7f0539b4b3e3f0d99443"
+version = "0.19.0"
+source = "git+https://github.com/paritytech/subxt.git?branch=master#cc0b1ec84acae528a5172ce87398bfef48e9cf2d"
 dependencies = [
  "async-trait",
  "bitvec",
@@ -2322,8 +2321,8 @@ dependencies = [
 
 [[package]]
 name = "subxt-codegen"
-version = "0.18.1"
-source = "git+https://github.com/paritytech/subxt.git?branch=at-block-stats#16d4306dfa7725d11c1c7f0539b4b3e3f0d99443"
+version = "0.19.0"
+source = "git+https://github.com/paritytech/subxt.git?branch=master#cc0b1ec84acae528a5172ce87398bfef48e9cf2d"
 dependencies = [
  "async-trait",
  "darling",
@@ -2340,8 +2339,8 @@ dependencies = [
 
 [[package]]
 name = "subxt-macro"
-version = "0.18.1"
-source = "git+https://github.com/paritytech/subxt.git?branch=at-block-stats#16d4306dfa7725d11c1c7f0539b4b3e3f0d99443"
+version = "0.19.0"
+source = "git+https://github.com/paritytech/subxt.git?branch=master#cc0b1ec84acae528a5172ce87398bfef48e9cf2d"
 dependencies = [
  "async-trait",
  "darling",

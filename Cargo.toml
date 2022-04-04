@@ -7,6 +7,5 @@ edition = "2021"
 clap = { version = "3", features = ["derive"] }
 codec = { package = "parity-scale-codec", version = "3"  }
 futures = "0.3"
-subxt = { git = "https://github.com/paritytech/subxt.git", branch = "at-block-stats" }
+subxt = { git = "https://github.com/paritytech/subxt.git", branch = "master" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
-once_cell = "1"
