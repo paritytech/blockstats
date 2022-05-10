@@ -72,14 +72,14 @@ pub async fn subscribe_stats(
                 .rpc()
                 .block_stats(block.hash())
                 .await
-                .map_err(|_| RpcError::Request("Failed to query block stats".to_string()))?
-                .ok_or_else(|| RpcError::Request("Block not available.".to_string()))?;
+                .map_err(|_| RpcError::Custom("Failed to query block stats".to_string()))?
+                .ok_or_else(|| RpcError::Custom("Block not available.".to_string()))?;
             let weight = api
                 .storage()
                 .system()
                 .block_weight(Some(block.hash()))
                 .await
-                .map_err(|_| RpcError::Request("Failed to query block weight".to_string()))?;
+                .map_err(|_| RpcError::Custom("Failed to query block weight".to_string()))?;
             let pov_len = stats.witness_len + stats.block_len;
             let total_weight = weight.normal + weight.operational + weight.mandatory;
 
