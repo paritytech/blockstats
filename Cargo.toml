@@ -2,6 +2,14 @@
 name = "blockstats"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.56.1"
+authors = ["Parity Technologies <admin@parity.io>"]
+license = "Apache-2.0"
+description = "Monitor block statistics of cumulus based parachains."
+keywords = ["substrate", "polkadot", "blockchain", "parachain", "parity"]
+categories = ["command-line-utilities", "development-tools"]
+repository = "https://github.com/paritytech/blockstats"
+include = ["src/**/*", "LICENSE", "README.md"]
 
 [dependencies]
 clap = { version = "3", features = ["derive"] }
