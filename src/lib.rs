@@ -1,22 +1,15 @@
 use futures::{TryStream, TryStreamExt};
 use std::{boxed::Box, fmt, sync::Arc};
 use subxt::{
-    rpc::RpcError, sp_runtime::traits::Header, ClientBuilder, DefaultConfig,
-    SubstrateExtrinsicParams,
+    sp_core::H256, sp_runtime::traits::Header, BasicError, Client, ClientBuilder, DefaultConfig,
 };
 
 /// 50% of what is stored in configuration::activeConfig::maxPovSize at the relay chain.
 const POV_MAX: u64 = 5_242_880 / 2;
 
-#[subxt::subxt(runtime_metadata_path = "metadata/substrate.scale")]
-pub mod substrate {}
-
-type SubstrateRuntime =
-    substrate::RuntimeApi<DefaultConfig, SubstrateExtrinsicParams<DefaultConfig>>;
-
 #[derive(Debug)]
 pub struct BlockStats {
-    pub hash: subxt::sp_core::H256,
+    pub hash: H256,
     pub number: u32,
     pub pov_len: u64,
     pub witness_len: u64,
@@ -46,54 +39,87 @@ impl fmt::Display for BlockStats {
 
 pub async fn subscribe_stats(
     url: &str,
-) -> Result<impl TryStream<Ok = BlockStats, Error = RpcError> + Unpin, RpcError> {
-    let api = Arc::new(
-        ClientBuilder::new()
-            .set_url(url)
-            .build()
-            .await
-            .map_err(|_| RpcError::Custom("Failed to create client".to_string()))?
-            .to_runtime_api::<SubstrateRuntime>(),
-    );
+) -> Result<impl TryStream<Ok = BlockStats, Error = BasicError> + Unpin, BasicError> {
+    let client: Client<DefaultConfig> = ClientBuilder::new().set_url(url).build().await?;
+    let client = Arc::new(client);
 
-    let max_weight = api.constants().system().block_weights().unwrap();
-    let blocks = api
-        .client
+    let blocks = client
         .rpc()
         .subscribe_blocks()
-        .await
-        .map_err(|_| RpcError::Custom("Failed to subscribe to blocks".to_string()))?;
+        .await?
+        .map_err(BasicError::from);
 
-    Ok(Box::pin(blocks.and_then(move |block| {
-        let api = api.clone();
-        async move {
-            let stats = api
-                .client
-                .rpc()
-                .block_stats(block.hash())
-                .await
-                .map_err(|_| RpcError::Custom("Failed to query block stats".to_string()))?
-                .ok_or_else(|| RpcError::Custom("Block not available.".to_string()))?;
-            let weight = api
-                .storage()
-                .system()
-                .block_weight(Some(block.hash()))
-                .await
-                .map_err(|_| RpcError::Custom("Failed to query block weight".to_string()))?;
-            let pov_len = stats.witness_len + stats.block_len;
-            let total_weight = weight.normal + weight.operational + weight.mandatory;
+    let max_block_weights: BlockWeights = {
+        let locked_metadata = client.metadata();
+        let metadata = locked_metadata.read();
+        let pallet = metadata.pallet("System")?;
+        let constant = pallet.constant("BlockWeights")?;
+        codec::Decode::decode(&mut &constant.value[..])?
+    };
 
-            Ok(BlockStats {
-                hash: block.hash(),
-                number: *block.number(),
-                pov_len,
-                witness_len: stats.witness_len,
-                len: stats.block_len,
-                weight: total_weight,
-                num_extrinsics: stats.num_extrinsics,
-                max_pov: POV_MAX,
-                max_weight: max_weight.max_block,
-            })
-        }
-    })))
+    Ok(Box::pin(blocks.map_err(Into::into).and_then(
+        move |block| {
+            let client = client.clone();
+            let block_weight_storage_entry = BlockWeightStorageEntry;
+            async move {
+                let stats = client
+                    .rpc()
+                    .block_stats(block.hash())
+                    .await?
+                    .ok_or_else(|| BasicError::Other("Block not available.".to_string()))?;
+                let weight = client
+                    .storage()
+                    .fetch_or_default(&block_weight_storage_entry, Some(block.hash()))
+                    .await?;
+                let pov_len = stats.witness_len + stats.block_len;
+                let total_weight = weight.normal + weight.operational + weight.mandatory;
+
+                Ok(BlockStats {
+                    hash: block.hash(),
+                    number: *block.number(),
+                    pov_len,
+                    witness_len: stats.witness_len,
+                    len: stats.block_len,
+                    weight: total_weight,
+                    num_extrinsics: stats.num_extrinsics,
+                    max_pov: POV_MAX,
+                    max_weight: max_block_weights.max_block,
+                })
+            }
+        },
+    )))
+}
+
+#[derive(Clone)]
+struct BlockWeightStorageEntry;
+
+impl subxt::StorageEntry for BlockWeightStorageEntry {
+    const PALLET: &'static str = "System";
+    const STORAGE: &'static str = "BlockWeight";
+    type Value = PerDispatchClass<u64>;
+    fn key(&self) -> subxt::StorageEntryKey {
+        subxt::StorageEntryKey::Plain
+    }
+}
+
+#[derive(codec::Encode, codec::Decode)]
+struct BlockWeights {
+    pub base_block: u64,
+    pub max_block: u64,
+    pub per_class: PerDispatchClass<WeightsPerClass>,
+}
+
+#[derive(codec::Encode, codec::Decode)]
+struct PerDispatchClass<T> {
+    normal: T,
+    operational: T,
+    mandatory: T,
+}
+
+#[derive(codec::Encode, codec::Decode)]
+pub struct WeightsPerClass {
+    pub base_extrinsic: u64,
+    pub max_extrinsic: Option<u64>,
+    pub max_total: Option<u64>,
+    pub reserved: Option<u64>,
 }
