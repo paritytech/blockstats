@@ -12,8 +12,10 @@ repository = "https://github.com/paritytech/blockstats"
 include = ["src/**/*", "LICENSE", "README.md"]
 
 [dependencies]
-clap = { version = "3", features = ["derive"] }
 codec = { package = "parity-scale-codec", version = "3"  }
 futures = "0.3"
 subxt = "0.22"
+
+[dev-dependencies]
+clap = { version = "3", features = ["derive"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

@@ -71,11 +71,11 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           toolchain: ${{ matrix.toolchain }}
-          command: build
+          command: build --all-targets --all-features
 
       - name: Cargo test
         uses: actions-rs/cargo@v1
         with:
           toolchain: ${{ matrix.toolchain }}
           command: test
-          args: --all-features
+          args: --all-targets --all-features
