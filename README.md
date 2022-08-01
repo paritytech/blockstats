@@ -1,9 +1,11 @@
 # blockstats
 
-Connect to a parachain RPC node and monitor stats about its blocks.
+Library to connect to a parachain RPC node and monitor stats about its blocks.
 This includes the PoV (witness vs. transactions), weight and TX
 pool fullness. This is useful to gain insights where about bottlenecks
-(computationb vs bandwith).
+(computation vs bandwith).
 
-This crate contains a library you can depend on and also a basic binary that just prints
-the block stats to stdout.
+## Use for benchmarking
+
+[`smart-bench`](https://github.com/paritytech/smart-bench) uses this library to benchmark
+smart contract execution performance on a parachain.
