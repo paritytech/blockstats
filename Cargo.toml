@@ -14,7 +14,7 @@ include = ["src/**/*", "LICENSE", "README.md"]
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3"  }
 futures = "0.3"
-subxt = "0.22"
+subxt = "0.23"
 
 [dev-dependencies]
 clap = { version = "3", features = ["derive"] }
