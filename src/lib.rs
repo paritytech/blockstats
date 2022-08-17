@@ -94,7 +94,8 @@ pub async fn subscribe_stats(
                     "BlockWeight",
                     vec![],
                     Default::default(),
-                );
+                )
+                .unvalidated();
             async move {
                 let stats = client
                     .rpc()
