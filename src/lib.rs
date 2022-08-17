@@ -6,7 +6,10 @@
 use futures::{TryStream, TryStreamExt};
 use std::{boxed::Box, fmt, sync::Arc};
 use subxt::{
-    sp_core::H256, sp_runtime::traits::Header, BasicError, Client, ClientBuilder, DefaultConfig,
+    ext::{sp_core::H256, sp_runtime::traits::Header},
+    metadata::DecodeStaticType,
+    storage::{address::Yes, StaticStorageAddress},
+    Error, OnlineClient, PolkadotConfig as DefaultConfig,
 };
 
 /// 50% of what is stored in configuration::activeConfig::maxPovSize at the relay chain.
@@ -69,19 +72,14 @@ impl fmt::Display for BlockStats {
 /// The `url` needs to be a websocket so that we can subscribe to new blocks.
 pub async fn subscribe_stats(
     url: &str,
-) -> Result<impl TryStream<Ok = BlockStats, Error = BasicError> + Unpin, BasicError> {
-    let client: Client<DefaultConfig> = ClientBuilder::new().set_url(url).build().await?;
+) -> Result<impl TryStream<Ok = BlockStats, Error = Error> + Unpin, Error> {
+    let client = OnlineClient::<DefaultConfig>::from_url(url).await?;
     let client = Arc::new(client);
 
-    let blocks = client
-        .rpc()
-        .subscribe_blocks()
-        .await?
-        .map_err(BasicError::from);
+    let blocks = client.rpc().subscribe_blocks().await?;
 
     let max_block_weights: BlockWeights = {
-        let locked_metadata = client.metadata();
-        let metadata = locked_metadata.read();
+        let metadata = client.metadata();
         let pallet = metadata.pallet("System")?;
         let constant = pallet.constant("BlockWeights")?;
         codec::Decode::decode(&mut &constant.value[..])?
@@ -90,16 +88,23 @@ pub async fn subscribe_stats(
     Ok(Box::pin(blocks.map_err(Into::into).and_then(
         move |block| {
             let client = client.clone();
-            let block_weight_storage_entry = BlockWeightStorageEntry;
+            let block_weight_address =
+                StaticStorageAddress::<DecodeStaticType<PerDispatchClass<u64>>, Yes, Yes, ()>::new(
+                    "System",
+                    "BlockWeight",
+                    vec![],
+                    Default::default(),
+                )
+                .unvalidated();
             async move {
                 let stats = client
                     .rpc()
                     .block_stats(block.hash())
                     .await?
-                    .ok_or_else(|| BasicError::Other("Block not available.".to_string()))?;
-                let weight = client
+                    .ok_or_else(|| Error::Other("Block not available.".to_string()))?;
+                let weight: PerDispatchClass<u64> = client
                     .storage()
-                    .fetch_or_default(&block_weight_storage_entry, Some(block.hash()))
+                    .fetch_or_default(&block_weight_address, Some(block.hash()))
                     .await?;
                 let pov_len = stats.witness_len + stats.block_len;
                 let total_weight = weight.normal + weight.operational + weight.mandatory;
@@ -118,18 +123,6 @@ pub async fn subscribe_stats(
             }
         },
     )))
-}
-
-#[derive(Clone)]
-struct BlockWeightStorageEntry;
-
-impl subxt::StorageEntry for BlockWeightStorageEntry {
-    const PALLET: &'static str = "System";
-    const STORAGE: &'static str = "BlockWeight";
-    type Value = PerDispatchClass<u64>;
-    fn key(&self) -> subxt::StorageEntryKey {
-        subxt::StorageEntryKey::Plain
-    }
 }
 
 #[derive(codec::Encode, codec::Decode)]
