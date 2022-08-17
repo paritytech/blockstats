@@ -76,7 +76,7 @@ pub async fn subscribe_stats(
     let client = OnlineClient::<DefaultConfig>::from_url(url).await?;
     let client = Arc::new(client);
 
-    let blocks = client.rpc().subscribe_blocks().await?.map_err(Error::from);
+    let blocks = client.rpc().subscribe_blocks().await?;
 
     let max_block_weights: BlockWeights = {
         let metadata = client.metadata();
