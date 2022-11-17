@@ -6,7 +6,7 @@
 use futures::{TryStream, TryStreamExt};
 use std::{boxed::Box, fmt, sync::Arc};
 use subxt::{
-    ext::{sp_core::H256, sp_runtime::traits::Header},
+    ext::sp_core::H256,
     metadata::DecodeStaticType,
     storage::{address::Yes, StaticStorageAddress},
     Error, OnlineClient, PolkadotConfig as DefaultConfig,
@@ -76,7 +76,7 @@ pub async fn subscribe_stats(
     let client = OnlineClient::<DefaultConfig>::from_url(url).await?;
     let client = Arc::new(client);
 
-    let blocks = client.rpc().subscribe_blocks().await?;
+    let blocks = client.blocks().subscribe_finalized().await?;
 
     let max_block_weights: BlockWeights = {
         let metadata = client.metadata();
@@ -111,7 +111,7 @@ pub async fn subscribe_stats(
 
                 Ok(BlockStats {
                     hash: block.hash(),
-                    number: *block.number(),
+                    number: block.number(),
                     pov_len,
                     witness_len: stats.witness_len,
                     len: stats.block_len,
