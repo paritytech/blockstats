@@ -3,12 +3,12 @@
 //! pool fullness. This is useful to gain insights where about bottlenecks
 //! (computationb vs bandwith).
 
+use core::ops::Add;
 use futures::{TryStream, TryStreamExt};
 use std::{boxed::Box, fmt, sync::Arc};
 use subxt::{
-    ext::sp_core::H256,
-    metadata::DecodeStaticType,
-    storage::{address::Yes, StaticStorageAddress},
+    ext::{scale_decode, sp_core::H256},
+    storage::{address::StaticStorageMapKey, address::Yes, Address},
     Error, OnlineClient, PolkadotConfig as DefaultConfig,
 };
 
@@ -34,7 +34,7 @@ pub struct BlockStats {
     /// Size of the block in bytes.
     pub len: u64,
     /// Overall weight used by the block.
-    pub weight: u64,
+    pub weight: Weight,
     /// Number of extrinsics in a block.
     pub num_extrinsics: u64,
     /// The maximum allowed PoV size.
@@ -47,19 +47,21 @@ pub struct BlockStats {
     ///
     /// Please note that this is the overall weight disregarding any weight classes. It
     /// is usually never reached even in a chain that is at capacity.
-    pub max_weight: u64,
+    pub max_weight: Weight,
 }
 
 impl fmt::Display for BlockStats {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{:04}: PoV Size={:04}KiB({:03}%) Weight={:07}ms({:03}%) Witness={:04}KiB Block={:04}KiB NumExtrinsics={:04}",
+            "{:04}: PoV Size={:04}KiB({:03}%) Weight RefTime={:07}ms({:03}%) Weight ProofSize={:04}KiB({:03}%) Witness={:04}KiB Block={:04}KiB NumExtrinsics={:04}",
             self.number,
             self.pov_len / 1024,
             self.pov_len * 100 / self.max_pov,
-            self.weight / 1_000_000_000,
-            self.weight * 100 / self.max_weight,
+            self.weight.ref_time / 1_000_000_000,
+            self.weight.ref_time * 100 / self.max_weight.ref_time,
+            self.weight.proof_size / 1024,
+            self.weight.proof_size * 100 / self.max_weight.proof_size,
             self.witness_len / 1024,
             self.len / 1024,
             self.num_extrinsics,
@@ -88,8 +90,9 @@ pub async fn subscribe_stats(
     Ok(Box::pin(blocks.map_err(Into::into).and_then(
         move |block| {
             let client = client.clone();
+
             let block_weight_address =
-                StaticStorageAddress::<DecodeStaticType<PerDispatchClass<u64>>, Yes, Yes, ()>::new(
+                Address::<StaticStorageMapKey, PerDispatchClass<Weight>, Yes, Yes, ()>::new_static(
                     "System",
                     "BlockWeight",
                     vec![],
@@ -102,9 +105,10 @@ pub async fn subscribe_stats(
                     .block_stats(block.hash())
                     .await?
                     .ok_or_else(|| Error::Other("Block not available.".to_string()))?;
-                let weight: PerDispatchClass<u64> = client
+                let weight = client
                     .storage()
-                    .fetch_or_default(&block_weight_address, Some(block.hash()))
+                    .at(block.hash())
+                    .fetch_or_default(&block_weight_address)
                     .await?;
                 let pov_len = stats.witness_len + stats.block_len;
                 let total_weight = weight.normal + weight.operational + weight.mandatory;
@@ -125,24 +129,60 @@ pub async fn subscribe_stats(
     )))
 }
 
-#[derive(codec::Encode, codec::Decode)]
+/// Copied from `sp_weight` to additionally implement `scale_decode::DecodeAsType`.
+#[derive(
+    Copy,
+    Clone,
+    Eq,
+    PartialEq,
+    Debug,
+    Default,
+    codec::Encode,
+    codec::Decode,
+    codec::MaxEncodedLen,
+    scale_decode::DecodeAsType,
+)]
+#[decode_as_type(crate_path = "scale_decode")]
+pub struct Weight {
+    #[codec(compact)]
+    /// The weight of computational time used based on some reference hardware.
+    ref_time: u64,
+    #[codec(compact)]
+    /// The weight of storage space used by proof of validity.
+    proof_size: u64,
+}
+
+impl Add for Weight {
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self {
+        Self {
+            ref_time: self.ref_time + rhs.ref_time,
+            proof_size: self.proof_size + rhs.proof_size,
+        }
+    }
+}
+
+#[derive(codec::Decode, codec::Encode, scale_decode::DecodeAsType)]
+#[decode_as_type(crate_path = "scale_decode")]
 struct BlockWeights {
-    pub base_block: u64,
-    pub max_block: u64,
+    pub base_block: Weight,
+    pub max_block: Weight,
     pub per_class: PerDispatchClass<WeightsPerClass>,
 }
 
-#[derive(codec::Encode, codec::Decode)]
+#[derive(codec::Decode, codec::Encode, scale_decode::DecodeAsType)]
+#[decode_as_type(crate_path = "scale_decode")]
 struct PerDispatchClass<T> {
     normal: T,
     operational: T,
     mandatory: T,
 }
 
-#[derive(codec::Encode, codec::Decode)]
+#[derive(codec::Decode, codec::Encode, scale_decode::DecodeAsType)]
+#[decode_as_type(crate_path = "scale_decode")]
 struct WeightsPerClass {
-    pub base_extrinsic: u64,
-    pub max_extrinsic: Option<u64>,
-    pub max_total: Option<u64>,
-    pub reserved: Option<u64>,
+    pub base_extrinsic: Weight,
+    pub max_extrinsic: Option<Weight>,
+    pub max_total: Option<Weight>,
+    pub reserved: Option<Weight>,
 }
