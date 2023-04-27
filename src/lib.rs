@@ -3,9 +3,9 @@
 //! pool fullness. This is useful to gain insights where about bottlenecks
 //! (computationb vs bandwith).
 
+use core::ops::Add;
 use futures::{TryStream, TryStreamExt};
 use std::{boxed::Box, fmt, sync::Arc};
-use core::ops::Add;
 use subxt::{
     ext::{scale_decode, sp_core::H256},
     storage::{address::StaticStorageMapKey, address::Yes, Address},
@@ -111,9 +111,7 @@ pub async fn subscribe_stats(
                     .fetch_or_default(&block_weight_address)
                     .await?;
                 let pov_len = stats.witness_len + stats.block_len;
-                let total_weight = weight.normal
-                    + weight.operational
-                    + weight.mandatory;
+                let total_weight = weight.normal + weight.operational + weight.mandatory;
 
                 Ok(BlockStats {
                     hash: block.hash(),
@@ -155,13 +153,13 @@ pub struct Weight {
 }
 
 impl Add for Weight {
-	type Output = Self;
-	fn add(self, rhs: Self) -> Self {
-		Self {
-			ref_time: self.ref_time + rhs.ref_time,
-			proof_size: self.proof_size + rhs.proof_size,
-		}
-	}
+    type Output = Self;
+    fn add(self, rhs: Self) -> Self {
+        Self {
+            ref_time: self.ref_time + rhs.ref_time,
+            proof_size: self.proof_size + rhs.proof_size,
+        }
+    }
 }
 
 #[derive(codec::Decode, codec::Encode, scale_decode::DecodeAsType)]
