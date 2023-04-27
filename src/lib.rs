@@ -5,6 +5,7 @@
 
 use futures::{TryStream, TryStreamExt};
 use std::{boxed::Box, fmt, sync::Arc};
+use core::ops::Add;
 use subxt::{
     ext::{scale_decode, sp_core::H256},
     storage::{address::StaticStorageMapKey, address::Yes, Address},
@@ -33,7 +34,7 @@ pub struct BlockStats {
     /// Size of the block in bytes.
     pub len: u64,
     /// Overall weight used by the block.
-    pub weight: u64,
+    pub weight: Weight,
     /// Number of extrinsics in a block.
     pub num_extrinsics: u64,
     /// The maximum allowed PoV size.
@@ -46,19 +47,21 @@ pub struct BlockStats {
     ///
     /// Please note that this is the overall weight disregarding any weight classes. It
     /// is usually never reached even in a chain that is at capacity.
-    pub max_weight: u64,
+    pub max_weight: Weight,
 }
 
 impl fmt::Display for BlockStats {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(
             f,
-            "{:04}: PoV Size={:04}KiB({:03}%) Weight={:07}ms({:03}%) Witness={:04}KiB Block={:04}KiB NumExtrinsics={:04}",
+            "{:04}: PoV Size={:04}KiB({:03}%) Weight RefTime={:07}ms({:03}%) Weight ProofSize={:04}KiB({:03}%) Witness={:04}KiB Block={:04}KiB NumExtrinsics={:04}",
             self.number,
             self.pov_len / 1024,
             self.pov_len * 100 / self.max_pov,
-            self.weight / 1_000_000_000,
-            self.weight * 100 / self.max_weight,
+            self.weight.ref_time / 1_000_000_000,
+            self.weight.ref_time * 100 / self.max_weight.ref_time,
+            self.weight.proof_size / 1024,
+            self.weight.proof_size * 100 / self.max_weight.proof_size,
             self.witness_len / 1024,
             self.len / 1024,
             self.num_extrinsics,
@@ -108,9 +111,9 @@ pub async fn subscribe_stats(
                     .fetch_or_default(&block_weight_address)
                     .await?;
                 let pov_len = stats.witness_len + stats.block_len;
-                let total_weight = weight.normal.ref_time
-                    + weight.operational.ref_time
-                    + weight.mandatory.ref_time;
+                let total_weight = weight.normal
+                    + weight.operational
+                    + weight.mandatory;
 
                 Ok(BlockStats {
                     hash: block.hash(),
@@ -121,7 +124,7 @@ pub async fn subscribe_stats(
                     weight: total_weight,
                     num_extrinsics: stats.num_extrinsics,
                     max_pov: POV_MAX,
-                    max_weight: max_block_weights.max_block.ref_time,
+                    max_weight: max_block_weights.max_block,
                 })
             }
         },
@@ -149,6 +152,16 @@ pub struct Weight {
     #[codec(compact)]
     /// The weight of storage space used by proof of validity.
     proof_size: u64,
+}
+
+impl Add for Weight {
+	type Output = Self;
+	fn add(self, rhs: Self) -> Self {
+		Self {
+			ref_time: self.ref_time + rhs.ref_time,
+			proof_size: self.proof_size + rhs.proof_size,
+		}
+	}
 }
 
 #[derive(codec::Decode, codec::Encode, scale_decode::DecodeAsType)]
