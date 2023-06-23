@@ -76,9 +76,16 @@ pub async fn subscribe_stats(
     url: &str,
 ) -> Result<impl TryStream<Ok = BlockStats, Error = Error> + Unpin, Error> {
     let client = OnlineClient::<DefaultConfig>::from_url(url).await?;
+    subscribe_stats_with_client(client).await
+}
+
+/// Connect to the specified node and listen for new blocks using OnlineClient.
+pub async fn subscribe_stats_with_client(
+    client: OnlineClient<DefaultConfig>,
+) -> Result<impl TryStream<Ok = BlockStats, Error = Error> + Unpin, Error> {
     let client = Arc::new(client);
 
-    let blocks = client.blocks().subscribe_finalized().await?;
+    let blocks = client.blocks().subscribe_best().await?;
 
     let max_block_weights: BlockWeights = {
         let metadata = client.metadata();
