@@ -5,11 +5,11 @@
 
 use core::ops::Add;
 use futures::{TryStream, TryStreamExt};
-use std::{boxed::Box, fmt, sync::Arc};
+use std::{boxed::Box, fmt};
 use subxt::{
     ext::{scale_decode, sp_core::H256},
     storage::{address::StaticStorageMapKey, address::Yes, Address},
-    Error, OnlineClient, PolkadotConfig as DefaultConfig,
+    Error, OnlineClient, PolkadotConfig as DefaultConfig, error::MetadataError, backend::{legacy::{LegacyRpcMethods}, rpc::RpcClient}
 };
 
 /// 50% of what is stored in configuration::activeConfig::maxPovSize at the relay chain.
@@ -75,28 +75,33 @@ impl fmt::Display for BlockStats {
 pub async fn subscribe_stats(
     url: &str,
 ) -> Result<impl TryStream<Ok = BlockStats, Error = Error> + Unpin, Error> {
-    let client = OnlineClient::<DefaultConfig>::from_url(url).await?;
-    subscribe_stats_with_client(client).await
+    let rpc_client = RpcClient::from_url(url).await?;
+    subscribe_stats_with_client(rpc_client).await
 }
 
 /// Connect to the specified node and listen for new blocks using OnlineClient.
 pub async fn subscribe_stats_with_client(
-    client: OnlineClient<DefaultConfig>,
+    rpc_client: RpcClient,
 ) -> Result<impl TryStream<Ok = BlockStats, Error = Error> + Unpin, Error> {
-    let client = Arc::new(client);
-
+    let client = OnlineClient::<DefaultConfig>::from_rpc_client(rpc_client.clone()).await?;
     let blocks = client.blocks().subscribe_best().await?;
 
     let max_block_weights: BlockWeights = {
         let metadata = client.metadata();
-        let pallet = metadata.pallet("System")?;
-        let constant = pallet.constant("BlockWeights")?;
-        codec::Decode::decode(&mut &constant.value[..])?
+        let pallet = metadata.pallet_by_name_err("System")?;
+        let constant_name = "BlockWeights";
+        let constant = pallet
+            .constant_by_name(constant_name)
+            .ok_or_else(|| {
+                MetadataError::ConstantNameNotFound(constant_name.to_owned())
+            })?;
+        codec::Decode::decode(&mut &constant.value()[..])?
     };
 
     Ok(Box::pin(blocks.map_err(Into::into).and_then(
         move |block| {
             let client = client.clone();
+            let rpc_methods = LegacyRpcMethods::<DefaultConfig>::new(rpc_client.clone());
 
             let block_weight_address =
                 Address::<StaticStorageMapKey, PerDispatchClass<Weight>, Yes, Yes, ()>::new_static(
@@ -107,9 +112,8 @@ pub async fn subscribe_stats_with_client(
                 )
                 .unvalidated();
             async move {
-                let stats = client
-                    .rpc()
-                    .block_stats(block.hash())
+                let stats = rpc_methods
+                    .dev_get_block_stats(block.hash())
                     .await?
                     .ok_or_else(|| Error::Other("Block not available.".to_string()))?;
                 let weight = client
