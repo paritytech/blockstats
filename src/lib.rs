@@ -7,9 +7,11 @@ use core::ops::Add;
 use futures::{TryStream, TryStreamExt};
 use std::{boxed::Box, fmt};
 use subxt::{
+    backend::{legacy::LegacyRpcMethods, rpc::RpcClient},
+    error::MetadataError,
     ext::{scale_decode, sp_core::H256},
     storage::{address::StaticStorageMapKey, address::Yes, Address},
-    Error, OnlineClient, PolkadotConfig as DefaultConfig, error::MetadataError, backend::{legacy::{LegacyRpcMethods}, rpc::RpcClient}
+    Error, OnlineClient, PolkadotConfig as DefaultConfig,
 };
 
 /// 50% of what is stored in configuration::activeConfig::maxPovSize at the relay chain.
@@ -92,9 +94,7 @@ pub async fn subscribe_stats_with_client(
         let constant_name = "BlockWeights";
         let constant = pallet
             .constant_by_name(constant_name)
-            .ok_or_else(|| {
-                MetadataError::ConstantNameNotFound(constant_name.to_owned())
-            })?;
+            .ok_or_else(|| MetadataError::ConstantNameNotFound(constant_name.to_owned()))?;
         codec::Decode::decode(&mut &constant.value()[..])?
     };
 
