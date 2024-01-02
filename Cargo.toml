@@ -1,6 +1,6 @@
 [package]
 name = "blockstats"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 rust-version = "1.56.1"
 authors = ["Parity Technologies <admin@parity.io>"]
@@ -14,7 +14,7 @@ include = ["src/**/*", "LICENSE", "README.md"]
 [dependencies]
 codec = { package = "parity-scale-codec", version = "3"  }
 futures = "0.3"
-subxt = "0.28"
+subxt = { version = "0.33", features = ["substrate-compat"] }
 
 [dev-dependencies]
 clap = { version = "4", features = ["derive"] }
